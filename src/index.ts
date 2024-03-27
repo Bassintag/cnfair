@@ -1,6 +1,7 @@
 import { InvalidArgumentError, Option, program } from "commander";
 import { token } from "./commands/token.ts";
 import { redeem } from "./commands/redeem.ts";
+import { loadGlobalOptions } from "./utils/options.ts";
 
 const parseIntArg = (value: unknown): number => {
   const parsedValue = parseInt(value as string, 10);
@@ -11,6 +12,8 @@ const parseIntArg = (value: unknown): number => {
 };
 
 export const start = () => {
+  program.addOption(new Option("--log-http", "Log HTTP requests"));
+
   program
     .command("redeem")
     .arguments("<productIds...>")
@@ -32,4 +35,6 @@ export const start = () => {
   program.command("token").arguments("[token]").action(token);
 
   program.parse();
+
+  loadGlobalOptions();
 };
