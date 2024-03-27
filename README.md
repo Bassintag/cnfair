@@ -2,7 +2,7 @@
 
 ## Installation
 
-### 1. Installing Node.JS
+### 1. Installing Bun
 Install the latest version of [Bun](https://bun.sh/)
 
 ### 2. Installing dependencies
