@@ -3,7 +3,7 @@
   "module": "src/cnfair.ts",
   "name": "cnfair-cli",
   "description": "CLI used to interact with CNFair",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "repository": {
     "url": "git+https://github.com/Bassintag/cnfair.git"
   },
