@@ -42,6 +42,12 @@ Run the following command:
 
 ``bun link``
 
+## Updating
+
+To update the CLI you can simply run the following command:
+
+```npm i -g cnfair-cli```
+
 ## Usage
 
 To use the CLI run the following command:
@@ -72,7 +78,31 @@ Product ids often look like this: ``PI0000000000`` and can be found in the URL o
 
 | flag                     | description                                                 | Default |
 |--------------------------|-------------------------------------------------------------|---------|
-| -r --restock             | Enable restock mode                                         | false   |
+| -r, --restock            | Enable restock mode                                         | false   |
 | -d, --delay <amount>     | Delay between each attempts in seconds                      | 5       |
 | --restock-delay <amount> | Delay between each attempts in seconds when in restock mode | 10      |
-| -w --way                 | Payment method (choices: "points", "balance")               | points  |
+| -w, --way                | Payment method (choices: "points", "balance")               | points  |
+
+### Examples
+
+Redeem a single product:
+``cnfair redeem PI00000001``
+
+Redeem two products:
+``cnfair redeem PI00000001 PI00000002``
+
+Redeem two products and pay with balance:
+``cnfair redeem -w balance PI00000001 PI00000002``
+
+Redeem a product with a retry delay of 1s:
+``cnfair redeem -d 1 PI00000001``
+
+Monitor a product for restock:
+``cnfair redeem -r PI00000001``
+
+Monitor a product for restock every 20s:
+``cnfair redeem -r --restock-delay 20 PI00000001``
+
+Redeem 3 products with a delay of 1s, enable restock monitoring with a delay of 20s and pay with balance:
+``cnfair redeem -d 1 -r --restock-delay 20 -w balance PI00000001 PI00000002 PI00000003``
+
