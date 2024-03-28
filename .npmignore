@@ -1,0 +1,10 @@
+.github/
+.idea/
+node_modules/
+scripts/
+src/
+
+.gitignore
+bun.lockb
+*.iml
+tsconfig.json

@@ -1,0 +1,50 @@
+name: build-publish
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      # setup
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v1
+
+      # build package
+      - run: bun install
+      - run: bun run build
+
+      # upload artifacts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-data
+          path: dist
+
+  publish:
+    name: publish
+    runs-on: ubuntu-latest
+    environment: prod
+    needs: build
+    steps:
+      # setup
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+          registry-url: "https://registry.npmjs.org"
+
+      # download artifacts
+      - uses: actions/download-artifact@v4
+        with:
+          name: build-data
+          path: dist
+
+      # publish to npm
+      - run: yarn publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

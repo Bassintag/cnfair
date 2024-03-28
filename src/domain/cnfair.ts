@@ -1,7 +1,7 @@
 export enum CNFairProductStatus {
-  AVAILABLE_SOON = 0,
   REDEEMABLE = 1,
   REDEEMED = 2,
+  AVAILABLE_SOON = 10,
 }
 
 export interface CNFairResponse<T> {

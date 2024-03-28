@@ -1,9 +1,20 @@
 {
   "type": "module",
-  "module": "cnfair.ts",
-  "name": "cnfair",
+  "module": "src/cnfair.ts",
+  "name": "cnfair-cli",
+  "description": "CLI used to interact with CNFair",
+  "version": "0.0.2",
+  "repository": {
+    "url": "git+https://github.com/Bassintag/cnfair.git"
+  },
+  "author": "Bassintag",
+  "license": "MIT",
+  "bin": {
+    "cnfair": "bin/cnfair.js"
+  },
   "scripts": {
-    "cnfair": "bun cnfair.ts"
+    "cnfair": "bun src/cnfair.ts",
+    "build": "bun scripts/build.ts"
   },
   "dependencies": {
     "@inquirer/prompts": "^4.3.0",

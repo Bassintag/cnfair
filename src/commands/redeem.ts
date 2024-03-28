@@ -45,8 +45,12 @@ export const redeem = async (
                 setOutput(`Invalid HTTP status: ${e.code} (${e.message})`);
                 return "";
               }
-              if (body.data.status === CNFairProductStatus.REDEEMED) {
-                throw new Error("Product already redeemed");
+              switch (body.data.status) {
+                case CNFairProductStatus.REDEEMED:
+                  throw new Error("Product already redeemed");
+                case CNFairProductStatus.AVAILABLE_SOON:
+                  setOutput("Not yet available");
+                  break;
               }
               return body.data.exchangeCode;
             }, delay * 1_000);
