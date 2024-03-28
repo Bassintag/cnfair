@@ -33,91 +33,82 @@ export const redeem = async (
         let redeemCode = "";
 
         return task.group((task) => [
-          task(
-            "Retrieving product code",
-            async ({ setOutput, setTitle, setWarning }) => {
-              redeemCode = await runEveryUntil(async ({ setDelay }) => {
-                let body: CNFairResponse<CNFairDetails>;
-                try {
-                  body = await fetchCNFair<CNFairDetails>(
-                    `gateway/mall/ep/item/detail?itemNo=${productId}`,
-                  );
-                } catch (e) {
-                  if (!(e instanceof HttpError)) {
-                    throw e;
-                  }
-                  if (
-                    e.code === 500 &&
-                    e.message.includes("code is incorrect")
-                  ) {
-                    throw new Error("Invalid product id");
-                  }
-                  setOutput(`Invalid HTTP status: ${e.code} (${e.message})`);
-                  return "";
+          task("Retrieving product code", async ({ setOutput, setTitle }) => {
+            redeemCode = await runEveryUntil(async ({ setDelay }) => {
+              let body: CNFairResponse<CNFairDetails>;
+              try {
+                body = await fetchCNFair<CNFairDetails>(
+                  `gateway/mall/ep/item/detail?itemNo=${productId}`,
+                );
+              } catch (e) {
+                if (!(e instanceof HttpError)) {
+                  throw e;
                 }
-                switch (body.data.status) {
-                  case CNFairProductStatus.REDEEMED:
-                    if (restock) {
-                      setDelay(restockDelay * 1_000);
-                      setWarning(
-                        "Product already redeemed, waiting for restock",
-                      );
-                      break;
-                    } else {
-                      throw new Error("Product already redeemed");
-                    }
-                  case CNFairProductStatus.AVAILABLE_SOON:
-                    setOutput("Not yet available");
-                    break;
+                if (e.code === 500 && e.message.includes("code is incorrect")) {
+                  throw new Error("Invalid product id");
                 }
-                return body.data.exchangeCode;
-              }, delay * 1_000);
-              setOutput(redeemCode);
-              setTitle("Got product code");
-            },
-          ),
-
-          task(
-            "Waiting for product code",
-            async ({ setTitle, setOutput, setWarning }) => {
-              setTitle("Redeeming product");
-              await runEveryUntil(async ({ setDelay }) => {
-                const body: PandabuyExchangeRequest = {
-                  exchangeCode: redeemCode,
-                  way:
-                    way === "points"
-                      ? PandabuyExchangeWay.POINTS
-                      : PandabuyExchangeWay.BALANCE,
-                };
-                try {
-                  await fetchPandabuy("/gateway/mall/ep/exchange/submit", {
-                    body,
-                    method: "POST",
-                    token: config.pandabuyToken,
-                  });
-                  return true;
-                } catch (e) {
-                  if (!(e instanceof HttpError)) {
-                    throw e;
-                  }
-                  if (
-                    e.code === 500 &&
-                    e.message.includes("redeemed by another user")
-                  ) {
-                    if (!restock) {
-                      throw new Error("Product already redeemed");
-                    }
+                setOutput(`Invalid HTTP status: ${e.code} (${e.message})`);
+                return "";
+              }
+              switch (body.data.status) {
+                case CNFairProductStatus.REDEEMED:
+                  if (restock) {
                     setDelay(restockDelay * 1_000);
-                    setWarning("Product already redeemed, waiting for restock");
+                    setOutput("Product already redeemed, waiting for restock");
+                    break;
                   } else {
-                    setOutput(`Invalid HTTP status: ${e.code} (${e.message})`);
+                    throw new Error("Product already redeemed");
                   }
-                  return false;
+                case CNFairProductStatus.INVALID:
+                  throw new Error("Product is m arked as invalid");
+                case CNFairProductStatus.AVAILABLE_SOON:
+                  setOutput("Not yet available");
+                  break;
+              }
+              return body.data.exchangeCode;
+            }, delay * 1_000);
+            setOutput(redeemCode);
+            setTitle("Got product code");
+          }),
+
+          task("Waiting for product code", async ({ setTitle, setOutput }) => {
+            setTitle("Redeeming product");
+            await runEveryUntil(async ({ setDelay }) => {
+              const body: PandabuyExchangeRequest = {
+                exchangeCode: redeemCode,
+                way:
+                  way === "points"
+                    ? PandabuyExchangeWay.POINTS
+                    : PandabuyExchangeWay.BALANCE,
+              };
+              try {
+                await fetchPandabuy("/gateway/mall/ep/exchange/submit", {
+                  body,
+                  method: "POST",
+                  token: config.pandabuyToken,
+                });
+                return true;
+              } catch (e) {
+                if (!(e instanceof HttpError)) {
+                  throw e;
                 }
-              }, delay * 1_000);
-              setTitle("Redeemed product");
-            },
-          ),
+                if (
+                  e.code === 500 &&
+                  e.message.includes("redeemed by another user")
+                ) {
+                  if (!restock) {
+                    throw new Error("Product already redeemed");
+                  }
+                  setDelay(restockDelay * 1_000);
+                  setOutput("Product already redeemed, waiting for restock");
+                } else {
+                  setOutput(`Invalid HTTP status: ${e.code} (${e.message})`);
+                }
+                return false;
+              }
+            }, delay * 1_000);
+            setTitle("Redeemed product");
+          }),
         ]);
       });
     }),

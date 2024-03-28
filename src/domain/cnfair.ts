@@ -1,6 +1,7 @@
 export enum CNFairProductStatus {
   REDEEMABLE = 1,
   REDEEMED = 2,
+  INVALID = 5,
   AVAILABLE_SOON = 10,
 }
 
