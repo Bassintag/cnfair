@@ -58,7 +58,7 @@ export const fetchJson = async <T>(
     body: payload,
     headers: {
       Accept: "application/json",
-      "Accept-Encoding": "gzip, deflate, br",
+      "Accept-Encoding": "gzip,deflate,br",
       "Accept-Language": "en-US,en",
       Connection: "keep-alive",
       currency: "USD",

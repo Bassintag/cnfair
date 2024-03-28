@@ -1,5 +1,6 @@
 import type { AppConfig } from "../domain/config.ts";
 import fs from "fs/promises";
+import fsSync from "fs";
 import * as path from "path";
 import * as os from "os";
 
@@ -10,7 +11,7 @@ const defaultConfig: AppConfig = {
 };
 
 const createConfigIfMissing = async () => {
-  const exists = await fs.exists(configPath);
+  const exists = fsSync.existsSync(configPath);
   if (!exists) {
     await saveConfig(defaultConfig);
     return true;
