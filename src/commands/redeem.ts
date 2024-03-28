@@ -16,11 +16,13 @@ import {
 export interface RedeemOptions {
   delay: number;
   way: "points" | "balance";
+  restock: boolean;
+  restockDelay: number;
 }
 
 export const redeem = async (
   productIds: string[],
-  { way, delay }: RedeemOptions,
+  { way, delay, restock, restockDelay }: RedeemOptions,
 ) => {
   const config = await loadConfig();
   validateToken(config);
@@ -32,7 +34,7 @@ export const redeem = async (
 
         return task.group((task) => [
           task("Retrieving product code", async ({ setOutput, setTitle }) => {
-            redeemCode = await runEveryUntil(async () => {
+            redeemCode = await runEveryUntil(async ({ setDelay }) => {
               let body: CNFairResponse<CNFairDetails>;
               try {
                 body = await fetchCNFair<CNFairDetails>(
@@ -47,7 +49,13 @@ export const redeem = async (
               }
               switch (body.data.status) {
                 case CNFairProductStatus.REDEEMED:
-                  throw new Error("Product already redeemed");
+                  if (restock) {
+                    setDelay(restockDelay * 1_000);
+                    setOutput("Product already redeemed, waiting for restock");
+                    break;
+                  } else {
+                    throw new Error("Product already redeemed");
+                  }
                 case CNFairProductStatus.AVAILABLE_SOON:
                   setOutput("Not yet available");
                   break;
@@ -60,7 +68,7 @@ export const redeem = async (
 
           task("Waiting for product code", async ({ setTitle, setOutput }) => {
             setTitle("Redeeming product");
-            await runEveryUntil(async () => {
+            await runEveryUntil(async ({ setDelay }) => {
               const body: PandabuyExchangeRequest = {
                 exchangeCode: redeemCode,
                 way:
@@ -83,9 +91,14 @@ export const redeem = async (
                   e.code === 500 &&
                   e.message.includes("redeemed by another user")
                 ) {
-                  throw new Error("Product already redeemed");
+                  if (!restock) {
+                    throw new Error("Product already redeemed");
+                  }
+                  setDelay(restockDelay * 1_000);
+                  setOutput("Product already redeemed, waiting for restock");
+                } else {
+                  setOutput(`Invalid HTTP status: ${e.code} (${e.message})`);
                 }
-                setOutput(`Invalid HTTP status: ${e.code} (${e.message})`);
                 return false;
               }
             }, delay * 1_000);
@@ -97,18 +110,32 @@ export const redeem = async (
   );
 };
 
+interface RunEveryUntilControls {
+  setDelay: (every: number) => void;
+}
+
 const runEveryUntil = <T>(
-  func: () => Promise<T>,
+  func: (controls: RunEveryUntilControls) => Promise<T>,
   every: number,
   isDone?: (value: T) => boolean,
 ) => {
   return new Promise<T>((resolve, reject) => {
     let done: boolean;
     let value: T;
+    let timer: Timer;
+    let delay = every;
+
+    const setDelay = (every: number) => {
+      if (delay === every) return;
+      delay = every;
+      clearInterval(timer);
+      timer = setInterval(callback, every);
+    };
+
     const callback = async () => {
       let result: T;
       try {
-        result = await func();
+        result = await func({ setDelay });
       } catch (e) {
         reject(e);
         throw e;
@@ -121,7 +148,8 @@ const runEveryUntil = <T>(
         resolve(value);
       }
     };
-    const timer = setInterval(callback, every);
+
+    timer = setInterval(callback, every);
     setImmediate(callback);
   });
 };

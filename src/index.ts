@@ -17,6 +17,7 @@ export const start = () => {
   program
     .command("redeem")
     .arguments("<productIds...>")
+    .addOption(new Option("-r, --restock", "Enable restock mode"))
     .addOption(
       new Option(
         "-d, --delay <amount>",
@@ -24,6 +25,14 @@ export const start = () => {
       )
         .argParser(parseIntArg)
         .default(5),
+    )
+    .addOption(
+      new Option(
+        "--restock-delay <amount>",
+        "Delay between each attempts in seconds when in restock mode",
+      )
+        .argParser(parseIntArg)
+        .default(10),
     )
     .addOption(
       new Option("-w, --way <method>", "Payment method")
