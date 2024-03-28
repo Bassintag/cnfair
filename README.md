@@ -54,7 +54,7 @@ To use the CLI run the following command:
 
 Allows to set the pandabuy token used to redeem the products
 
-You can find out your current token buy running this in a browser tab currently logged into pandabuy:
+You can find out your current token by running this in a browser tab currently logged into pandabuy:
 
 ```javascript
 token = localStorage.getItem("PANDABUY_TOKEN");
